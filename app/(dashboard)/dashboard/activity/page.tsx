@@ -7,8 +7,8 @@ import {
   UserCog,
   AlertCircle,
   UserMinus,
-  Mail,
-  CheckCircle,
+  Key,
+  CreditCard,
   type LucideIcon,
 } from 'lucide-react';
 import { ActivityType } from '@/lib/db/schema';
@@ -21,10 +21,8 @@ const iconMap: Record<ActivityType, LucideIcon> = {
   [ActivityType.UPDATE_PASSWORD]: Lock,
   [ActivityType.DELETE_ACCOUNT]: UserMinus,
   [ActivityType.UPDATE_ACCOUNT]: Settings,
-  [ActivityType.CREATE_TEAM]: UserPlus,
-  [ActivityType.REMOVE_TEAM_MEMBER]: UserMinus,
-  [ActivityType.INVITE_TEAM_MEMBER]: Mail,
-  [ActivityType.ACCEPT_INVITATION]: CheckCircle,
+  [ActivityType.ROTATE_API_KEY]: Key,
+  [ActivityType.ADD_FUNDS]: CreditCard,
 };
 
 function getRelativeTime(date: Date) {
@@ -55,14 +53,10 @@ function formatAction(action: ActivityType): string {
       return 'You deleted your account';
     case ActivityType.UPDATE_ACCOUNT:
       return 'You updated your account';
-    case ActivityType.CREATE_TEAM:
-      return 'You created a new team';
-    case ActivityType.REMOVE_TEAM_MEMBER:
-      return 'You removed a team member';
-    case ActivityType.INVITE_TEAM_MEMBER:
-      return 'You invited a team member';
-    case ActivityType.ACCEPT_INVITATION:
-      return 'You accepted an invitation';
+    case ActivityType.ROTATE_API_KEY:
+      return 'You rotated your API key';
+    case ActivityType.ADD_FUNDS:
+      return 'You added funds to your wallet';
     default:
       return 'Unknown action occurred';
   }
@@ -115,7 +109,7 @@ export default async function ActivityPage() {
               </h3>
               <p className="text-sm text-gray-500 max-w-sm">
                 When you perform actions like signing in or updating your
-                account, they'll appear here.
+                account, they&apos;ll appear here.
               </p>
             </div>
           )}

@@ -1,97 +1,79 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
-import { users, teams, teamMembers } from '@/lib/db/schema';
+import { users, activityLogs, ActivityType } from '@/lib/db/schema';
 import { setSession } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/payments/stripe';
-import Stripe from 'stripe';
+import { redis, setWalletBalance } from '@/lib/db/redis';
+import { sendDepositConfirmationEmail } from '@/lib/email/sendgrid';
+import { getEurToUsdRateWithFallback } from '@/lib/fx/rates';
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const sessionId = searchParams.get('session_id');
+  const sessionId = request.nextUrl.searchParams.get('session_id');
 
   if (!sessionId) {
     return NextResponse.redirect(new URL('/pricing', request.url));
   }
 
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['customer', 'subscription'],
-    });
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    if (!session.customer || typeof session.customer === 'string') {
-      throw new Error('Invalid customer data from Stripe.');
-    }
-
-    const customerId = session.customer.id;
-    const subscriptionId =
-      typeof session.subscription === 'string'
-        ? session.subscription
-        : session.subscription?.id;
-
-    if (!subscriptionId) {
-      throw new Error('No subscription found for this session.');
-    }
-
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
-      expand: ['items.data.price.product'],
-    });
-
-    const plan = subscription.items.data[0]?.price;
-
-    if (!plan) {
-      throw new Error('No plan found for this subscription.');
-    }
-
-    const productId = (plan.product as Stripe.Product).id;
-
-    if (!productId) {
-      throw new Error('No product ID found for this subscription.');
+    if (session.payment_status !== 'paid') {
+      return NextResponse.redirect(new URL('/pricing', request.url));
     }
 
     const userId = session.client_reference_id;
-    if (!userId) {
-      throw new Error("No user ID found in session's client_reference_id.");
-    }
+    if (!userId) throw new Error('No user ID in session.');
 
-    const user = await db
+    const [user] = await db
       .select()
       .from(users)
       .where(eq(users.id, Number(userId)))
       .limit(1);
 
-    if (user.length === 0) {
-      throw new Error('User not found in database.');
+    if (!user) throw new Error('User not found.');
+
+    // Idempotency: only process the balance update once per payment_intent
+    const paymentIntentId = session.payment_intent as string;
+    const acquired = await redis.set(
+      `payment:processed:${paymentIntentId}`,
+      '1',
+      'NX',
+      'EX',
+      86400
+    );
+
+    if (acquired !== null) {
+      const eurAmount = (session.amount_total ?? 0) / 100;
+      const eurToUsd = await getEurToUsdRateWithFallback();
+      const usdAmount = eurAmount * eurToUsd;
+
+      const [updated] = await db
+        .update(users)
+        .set({ balance: sql`balance + ${usdAmount.toFixed(6)}::numeric` })
+        .where(eq(users.id, user.id))
+        .returning({ balance: users.balance });
+
+      await setWalletBalance(user.apiKey, updated.balance.toString());
+
+      await db.insert(activityLogs).values({
+        userId: user.id,
+        action: ActivityType.ADD_FUNDS,
+        ipAddress: request.headers.get('x-forwarded-for') ?? '',
+      });
+
+      await sendDepositConfirmationEmail(
+        user.email,
+        eurAmount,
+        usdAmount,
+        parseFloat(updated.balance)
+      );
     }
 
-    const userTeam = await db
-      .select({
-        teamId: teamMembers.teamId,
-      })
-      .from(teamMembers)
-      .where(eq(teamMembers.userId, user[0].id))
-      .limit(1);
-
-    if (userTeam.length === 0) {
-      throw new Error('User is not associated with any team.');
-    }
-
-    await db
-      .update(teams)
-      .set({
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscriptionId,
-        stripeProductId: productId,
-        planName: (plan.product as Stripe.Product).name,
-        subscriptionStatus: subscription.status,
-        updatedAt: new Date(),
-      })
-      .where(eq(teams.id, userTeam[0].teamId));
-
-    await setSession(user[0]);
+    await setSession(user);
     return NextResponse.redirect(new URL('/dashboard', request.url));
   } catch (error) {
-    console.error('Error handling successful checkout:', error);
+    console.error('Error handling checkout success:', error);
     return NextResponse.redirect(new URL('/error', request.url));
   }
 }

@@ -1,92 +1,57 @@
-import { checkoutAction } from '@/lib/payments/actions';
+import { topUpAction } from '@/lib/payments/actions';
 import { Check } from 'lucide-react';
-import { getStripePrices, getStripeProducts } from '@/lib/payments/stripe';
 import { SubmitButton } from './submit-button';
 
-// Prices are fresh for one hour max
-export const revalidate = 3600;
+const TOP_UP_AMOUNTS = [
+  { label: '€5', cents: 500, description: 'Starter', perks: ['€5 wallet credit', 'No expiry'] },
+  { label: '€10', cents: 1000, description: 'Standard', perks: ['€10 wallet credit', 'No expiry'] },
+  { label: '€25', cents: 2500, description: 'Popular', perks: ['€25 wallet credit', 'No expiry'] },
+  { label: '€50', cents: 5000, description: 'Pro', perks: ['€50 wallet credit', 'No expiry'] },
+];
 
-export default async function PricingPage() {
-  const [prices, products] = await Promise.all([
-    getStripePrices(),
-    getStripeProducts(),
-  ]);
-
-  const basePlan = products.find((product) => product.name === 'Base');
-  const plusPlan = products.find((product) => product.name === 'Plus');
-
-  const basePrice = prices.find((price) => price.productId === basePlan?.id);
-  const plusPrice = prices.find((price) => price.productId === plusPlan?.id);
-
+export default function PricingPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid md:grid-cols-2 gap-8 max-w-xl mx-auto">
-        <PricingCard
-          name={basePlan?.name || 'Base'}
-          price={basePrice?.unitAmount || 800}
-          interval={basePrice?.interval || 'month'}
-          trialDays={basePrice?.trialPeriodDays || 7}
-          features={[
-            'Unlimited Usage',
-            'Unlimited Workspace Members',
-            'Email Support',
-          ]}
-          priceId={basePrice?.id}
-        />
-        <PricingCard
-          name={plusPlan?.name || 'Plus'}
-          price={plusPrice?.unitAmount || 1200}
-          interval={plusPrice?.interval || 'month'}
-          trialDays={plusPrice?.trialPeriodDays || 7}
-          features={[
-            'Everything in Base, and:',
-            'Early Access to New Features',
-            '24/7 Support + Slack Access',
-          ]}
-          priceId={plusPrice?.id}
-        />
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold text-gray-900">Add Funds</h1>
+        <p className="mt-3 text-lg text-gray-500">
+          Top up your wallet to continue using the MCP Bypass API
+        </p>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
+        {TOP_UP_AMOUNTS.map((amount) => (
+          <TopUpCard key={amount.cents} {...amount} />
+        ))}
       </div>
     </main>
   );
 }
 
-function PricingCard({
-  name,
-  price,
-  interval,
-  trialDays,
-  features,
-  priceId,
+function TopUpCard({
+  label,
+  cents,
+  description,
+  perks,
 }: {
-  name: string;
-  price: number;
-  interval: string;
-  trialDays: number;
-  features: string[];
-  priceId?: string;
+  label: string;
+  cents: number;
+  description: string;
+  perks: string[];
 }) {
   return (
-    <div className="pt-6">
-      <h2 className="text-2xl font-medium text-gray-900 mb-2">{name}</h2>
-      <p className="text-sm text-gray-600 mb-4">
-        with {trialDays} day free trial
-      </p>
-      <p className="text-4xl font-medium text-gray-900 mb-6">
-        ${price / 100}{' '}
-        <span className="text-xl font-normal text-gray-600">
-          per user / {interval}
-        </span>
-      </p>
-      <ul className="space-y-4 mb-8">
-        {features.map((feature, index) => (
-          <li key={index} className="flex items-start">
-            <Check className="h-5 w-5 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
-            <span className="text-gray-700">{feature}</span>
+    <div className="border border-gray-200 rounded-lg p-6 hover:border-orange-500 transition-colors flex flex-col">
+      <h2 className="text-2xl font-medium text-gray-900 mb-1">{label}</h2>
+      <p className="text-sm text-gray-600 mb-4">{description}</p>
+      <ul className="space-y-2 mb-6 flex-1">
+        {perks.map((perk) => (
+          <li key={perk} className="flex items-center text-sm text-gray-700">
+            <Check className="h-4 w-4 text-orange-500 mr-2 shrink-0" />
+            {perk}
           </li>
         ))}
       </ul>
-      <form action={checkoutAction}>
-        <input type="hidden" name="priceId" value={priceId} />
+      <form action={topUpAction}>
+        <input type="hidden" name="amountCents" value={cents} />
         <SubmitButton />
       </form>
     </div>

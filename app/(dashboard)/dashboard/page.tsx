@@ -1,287 +1,254 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter
-} from '@/components/ui/card';
-import { customerPortalAction } from '@/lib/payments/actions';
+  Loader2,
+  Copy,
+  RefreshCw,
+  Wallet,
+  TrendingDown,
+  Activity,
+  Check,
+  Key,
+} from 'lucide-react';
+import { rotateApiKey } from '@/app/(login)/actions';
 import { useActionState } from 'react';
-import { TeamDataWithMembers, User } from '@/lib/db/schema';
-import { removeTeamMember, inviteTeamMember } from '@/app/(login)/actions';
 import useSWR from 'swr';
-import { Suspense } from 'react';
-import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { User } from '@/lib/db/schema';
+import type { WalletStats, CallLog } from '@/lib/db/redis';
+import Link from 'next/link';
 
-type ActionState = {
-  error?: string;
-  success?: string;
+type ActionState = { error?: string; success?: string };
+type WalletData = {
+  stats: WalletStats | null;
+  recentCalls: CallLog[];
+  balanceEur: number;
+  eurToUsd: number;
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-function SubscriptionSkeleton() {
-  return (
-    <Card className="mb-8 h-[140px]">
-      <CardHeader>
-        <CardTitle>Team Subscription</CardTitle>
-      </CardHeader>
-    </Card>
-  );
+function toEur(usd: number, eurToUsd: number) {
+  return (usd / eurToUsd).toFixed(4);
 }
 
-function ManageSubscription() {
-  const { data: teamData } = useSWR<TeamDataWithMembers>('/api/team', fetcher);
+function WalletBalanceCard() {
+  const { data } = useSWR<WalletData>('/api/wallet', fetcher);
+  const balanceEur = data?.balanceEur ?? 0;
 
   return (
-    <Card className="mb-8">
+    <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Team Subscription</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Wallet className="h-5 w-5 text-orange-500" />
+          Wallet Balance
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <div className="mb-4 sm:mb-0">
-              <p className="font-medium">
-                Current Plan: {teamData?.planName || 'Free'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {teamData?.subscriptionStatus === 'active'
-                  ? 'Billed monthly'
-                  : teamData?.subscriptionStatus === 'trialing'
-                  ? 'Trial period'
-                  : 'No active subscription'}
-              </p>
-            </div>
-            <form action={customerPortalAction}>
-              <Button type="submit" variant="outline">
-                Manage Subscription
-              </Button>
-            </form>
-          </div>
-        </div>
+        <p className="text-4xl font-bold text-gray-900">
+          €{balanceEur.toFixed(4)}
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">Available balance</p>
+        <Button
+          asChild
+          className="mt-4 bg-orange-500 hover:bg-orange-600 text-white"
+        >
+          <Link href="/pricing">Add Funds</Link>
+        </Button>
       </CardContent>
     </Card>
   );
 }
 
-function TeamMembersSkeleton() {
-  return (
-    <Card className="mb-8 h-[140px]">
-      <CardHeader>
-        <CardTitle>Team Members</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="animate-pulse space-y-4 mt-1">
-          <div className="flex items-center space-x-4">
-            <div className="size-8 rounded-full bg-gray-200"></div>
-            <div className="space-y-2">
-              <div className="h-4 w-32 bg-gray-200 rounded"></div>
-              <div className="h-3 w-14 bg-gray-200 rounded"></div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+function ApiKeyCard() {
+  const { data: user, mutate } = useSWR<User>('/api/user', fetcher);
+  const [copied, setCopied] = useState(false);
+  const [state, formAction, isPending] = useActionState<ActionState, FormData>(
+    rotateApiKey,
+    {}
   );
-}
 
-function TeamMembers() {
-  const { data: teamData } = useSWR<TeamDataWithMembers>('/api/team', fetcher);
-  const [removeState, removeAction, isRemovePending] = useActionState<
-    ActionState,
-    FormData
-  >(removeTeamMember, {});
+  useEffect(() => {
+    if (state.success) mutate();
+  }, [state.success, mutate]);
 
-  const getUserDisplayName = (user: Pick<User, 'id' | 'name' | 'email'>) => {
-    return user.name || user.email || 'Unknown User';
+  const handleCopy = async () => {
+    if (!user?.apiKey) return;
+    await navigator.clipboard.writeText(user.apiKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!teamData?.teamMembers?.length) {
-    return (
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">No team members yet.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="mb-8">
+    <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Team Members</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Key className="h-5 w-5 text-orange-500" />
+          API Key
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <ul className="space-y-4">
-          {teamData.teamMembers.map((member, index) => (
-            <li key={member.id} className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Avatar>
-                  {/* 
-                    This app doesn't save profile images, but here
-                    is how you'd show them:
-
-                    <AvatarImage
-                      src={member.user.image || ''}
-                      alt={getUserDisplayName(member.user)}
-                    />
-                  */}
-                  <AvatarFallback>
-                    {getUserDisplayName(member.user)
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">
-                    {getUserDisplayName(member.user)}
-                  </p>
-                  <p className="text-sm text-muted-foreground capitalize">
-                    {member.role}
-                  </p>
-                </div>
-              </div>
-              {index > 1 ? (
-                <form action={removeAction}>
-                  <input type="hidden" name="memberId" value={member.id} />
-                  <Button
-                    type="submit"
-                    variant="outline"
-                    size="sm"
-                    disabled={isRemovePending}
-                  >
-                    {isRemovePending ? 'Removing...' : 'Remove'}
-                  </Button>
-                </form>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-        {removeState?.error && (
-          <p className="text-red-500 mt-4">{removeState.error}</p>
+        <div className="flex items-center gap-2 mb-4">
+          <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono truncate">
+            {user?.apiKey
+              ? `${user.apiKey.substring(0, 16)}${'•'.repeat(16)}`
+              : '...'}
+          </code>
+          <Button variant="outline" size="sm" onClick={handleCopy}>
+            {copied ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Use this key as your Anthropic API key in Claude Code.
+        </p>
+        <form action={formAction}>
+          <Button type="submit" variant="outline" disabled={isPending}>
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Rotating...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Rotate Key
+              </>
+            )}
+          </Button>
+        </form>
+        {state.error && (
+          <p className="text-red-500 text-sm mt-2">{state.error}</p>
+        )}
+        {state.success && (
+          <p className="text-green-500 text-sm mt-2">{state.success}</p>
         )}
       </CardContent>
     </Card>
   );
 }
 
-function InviteTeamMemberSkeleton() {
+function StatsCards() {
+  const { data } = useSWR<WalletData>('/api/wallet', fetcher);
+  const stats = data?.stats;
+  const eurToUsd = data?.eurToUsd ?? 1;
+
   return (
-    <Card className="h-[260px]">
-      <CardHeader>
-        <CardTitle>Invite Team Member</CardTitle>
-      </CardHeader>
-    </Card>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Total Spent
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold">
+            €{toEur(parseFloat(stats?.cost ?? '0'), eurToUsd)}
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+            <TrendingDown className="h-4 w-4 text-green-500" />
+            Total Saved
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold text-green-600">
+            €{toEur(parseFloat(stats?.savings ?? '0'), eurToUsd)}
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            API Calls
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold">{stats?.call_count ?? '0'}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Total Tokens
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold">
+            {parseInt(stats?.total_tokens ?? '0').toLocaleString()}
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
-function InviteTeamMember() {
-  const { data: user } = useSWR<User>('/api/user', fetcher);
-  const isOwner = user?.role === 'owner';
-  const [inviteState, inviteAction, isInvitePending] = useActionState<
-    ActionState,
-    FormData
-  >(inviteTeamMember, {});
+function RecentCallsCard() {
+  const { data } = useSWR<WalletData>('/api/wallet', fetcher);
+  const calls = data?.recentCalls ?? [];
+  const eurToUsd = data?.eurToUsd ?? 1;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invite Team Member</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-5 w-5 text-orange-500" />
+          Recent API Calls
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={inviteAction} className="space-y-4">
-          <div>
-            <Label htmlFor="email" className="mb-2">
-              Email
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Enter email"
-              required
-              disabled={!isOwner}
-            />
-          </div>
-          <div>
-            <Label>Role</Label>
-            <RadioGroup
-              defaultValue="member"
-              name="role"
-              className="flex space-x-4"
-              disabled={!isOwner}
-            >
-              <div className="flex items-center space-x-2 mt-2">
-                <RadioGroupItem value="member" id="member" />
-                <Label htmlFor="member">Member</Label>
-              </div>
-              <div className="flex items-center space-x-2 mt-2">
-                <RadioGroupItem value="owner" id="owner" />
-                <Label htmlFor="owner">Owner</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          {inviteState?.error && (
-            <p className="text-red-500">{inviteState.error}</p>
-          )}
-          {inviteState?.success && (
-            <p className="text-green-500">{inviteState.success}</p>
-          )}
-          <Button
-            type="submit"
-            className="bg-orange-500 hover:bg-orange-600 text-white"
-            disabled={isInvitePending || !isOwner}
-          >
-            {isInvitePending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Inviting...
-              </>
-            ) : (
-              <>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Invite Member
-              </>
-            )}
-          </Button>
-        </form>
-      </CardContent>
-      {!isOwner && (
-        <CardFooter>
-          <p className="text-sm text-muted-foreground">
-            You must be a team owner to invite new members.
+        {calls.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            No API calls yet. Start using your API key to see usage here.
           </p>
-        </CardFooter>
-      )}
+        ) : (
+          <ul className="space-y-3">
+            {calls.map((call, i) => (
+              <li
+                key={call.request_id ?? i}
+                className="flex items-center justify-between text-sm"
+              >
+                <div>
+                  <span className="font-medium">{call.model}</span>
+                  <span className="text-muted-foreground ml-2">
+                    {call.total_tokens.toLocaleString()} tokens
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-gray-900">
+                    €{toEur(call.cost, eurToUsd)}
+                  </span>
+                  <span className="text-green-600 ml-2">
+                    −€{toEur(call.savings, eurToUsd)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
     </Card>
   );
 }
 
-export default function SettingsPage() {
+export default function WalletPage() {
   return (
     <section className="flex-1 p-4 lg:p-8">
-      <h1 className="text-lg lg:text-2xl font-medium mb-6">Team Settings</h1>
-      <Suspense fallback={<SubscriptionSkeleton />}>
-        <ManageSubscription />
-      </Suspense>
-      <Suspense fallback={<TeamMembersSkeleton />}>
-        <TeamMembers />
-      </Suspense>
-      <Suspense fallback={<InviteTeamMemberSkeleton />}>
-        <InviteTeamMember />
-      </Suspense>
+      <h1 className="text-lg lg:text-2xl font-medium mb-6">
+        Wallet &amp; API Key
+      </h1>
+      <WalletBalanceCard />
+      <ApiKeyCard />
+      <StatsCards />
+      <RecentCallsCard />
     </section>
   );
 }
