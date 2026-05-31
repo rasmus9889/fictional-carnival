@@ -4,8 +4,29 @@ import { signToken, verifyToken } from '@/lib/auth/session';
 
 const protectedRoutes = '/dashboard';
 
+const STAGING_USER = 'admin';
+const STAGING_PASS = 'tinyblueturtle';
+
+function requireBasicAuth(request: NextRequest): NextResponse | null {
+  const auth = request.headers.get('authorization') ?? '';
+  if (auth.startsWith('Basic ')) {
+    const decoded = Buffer.from(auth.slice(6), 'base64').toString('utf-8');
+    const [user, pass] = decoded.split(':');
+    if (user === STAGING_USER && pass === STAGING_PASS) return null;
+  }
+  return new NextResponse('Unauthorized', {
+    status: 401,
+    headers: { 'WWW-Authenticate': 'Basic realm="LoopLoot Staging"' },
+  });
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (process.env.TEST_MODE === 'true') {
+    const deny = requireBasicAuth(request);
+    if (deny) return deny;
+  }
   const sessionCookie = request.cookies.get('session');
   const isProtectedRoute = pathname.startsWith(protectedRoutes);
 
