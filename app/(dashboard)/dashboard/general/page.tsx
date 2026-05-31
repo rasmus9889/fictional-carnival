@@ -14,61 +14,26 @@ import { Suspense } from 'react';
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 type ActionState = {
-  name?: string;
   error?: string;
   success?: string;
 };
 
-type AccountFormProps = {
-  state: ActionState;
-  nameValue?: string;
-  emailValue?: string;
-};
-
-function AccountForm({
-  state,
-  nameValue = '',
-  emailValue = ''
-}: AccountFormProps) {
-  return (
-    <>
-      <div>
-        <Label htmlFor="name" className="mb-2">
-          Name
-        </Label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="Enter your name"
-          defaultValue={state.name || nameValue}
-          required
-        />
-      </div>
-      <div>
-        <Label htmlFor="email" className="mb-2">
-          Email
-        </Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="Enter your email"
-          defaultValue={emailValue}
-          required
-        />
-      </div>
-    </>
-  );
-}
-
 function AccountFormWithData({ state }: { state: ActionState }) {
   const { data: user } = useSWR<User>('/api/user', fetcher);
   return (
-    <AccountForm
-      state={state}
-      nameValue={user?.name ?? ''}
-      emailValue={user?.email ?? ''}
-    />
+    <div>
+      <Label htmlFor="email" className="mb-2">
+        Email
+      </Label>
+      <Input
+        id="email"
+        name="email"
+        type="email"
+        placeholder="Enter your email"
+        defaultValue={user?.email ?? ''}
+        required
+      />
+    </div>
   );
 }
 
@@ -90,7 +55,7 @@ export default function GeneralPage() {
         </CardHeader>
         <CardContent>
           <form className="space-y-4" action={formAction}>
-            <Suspense fallback={<AccountForm state={state} />}>
+            <Suspense fallback={null}>
               <AccountFormWithData state={state} />
             </Suspense>
             {state.error && (

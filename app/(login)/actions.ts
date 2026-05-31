@@ -303,25 +303,21 @@ export const deleteAccount = validatedActionWithUser(
 );
 
 const updateAccountSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
   email: z.string().email('Invalid email address'),
 });
 
 export const updateAccount = validatedActionWithUser(
   updateAccountSchema,
   async (data, _, user) => {
-    const { name, email } = data;
+    const { email } = data;
 
     if (email !== user.email) {
-      return { name, email, error: 'Email changes are not supported. Contact support to change your email.' };
+      return { email, error: 'Email changes are not supported. Contact support to change your email.' };
     }
 
-    await Promise.all([
-      db.update(users).set({ name }).where(eq(users.id, user.id)),
-      logActivity(user.id, ActivityType.UPDATE_ACCOUNT),
-    ]);
+    await logActivity(user.id, ActivityType.UPDATE_ACCOUNT);
 
-    return { name, success: 'Account updated successfully.' };
+    return { success: 'Account updated successfully.' };
   }
 );
 
