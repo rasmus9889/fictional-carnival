@@ -49,14 +49,17 @@ const alterations = [
   `CREATE UNIQUE INDEX IF NOT EXISTS users_reset_token_unique ON users(reset_token) WHERE reset_token IS NOT NULL`,
 ];
 
-for (const statement of alterations) {
-  try {
-    await db.execute(sql.raw(statement));
-    console.log('OK:', statement.slice(0, 60));
-  } catch (e: any) {
-    console.error('FAIL:', statement.slice(0, 60), '->', e.message);
+async function main() {
+  for (const statement of alterations) {
+    try {
+      await db.execute(sql.raw(statement));
+      console.log('OK:', statement.slice(0, 60));
+    } catch (e: any) {
+      console.error('FAIL:', statement.slice(0, 60), '->', e.message);
+    }
   }
+  await client.end();
+  console.log('\nDone.');
 }
 
-await client.end();
-console.log('\nDone.');
+main();
