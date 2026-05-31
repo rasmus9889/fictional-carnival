@@ -81,6 +81,6 @@ BASE_URL=http://localhost:3000
 AUTH_SECRET=<random 32-byte base64>
 ```
 
-## Stale migration file
+## Database schema ownership
 
-`lib/db/migrations/0000_soft_the_anarchist.sql` is from the original saas-starter template (contains `teams`, `invitations`, `team_members` tables that no longer exist in `lib/db/schema.ts`). The actual live schema must be applied manually or by generating a fresh migration with `npm run db:generate`.
+This app owns creation of all tables: `users`, `user_preferences`, `token_usages`, `activity_logs`, `debug_logs`. Run `npm run db:migrate` on a fresh database to create them all. The migration in `lib/db/migrations/0000_soft_the_anarchist.sql` reflects the current `lib/db/schema.ts` exactly.

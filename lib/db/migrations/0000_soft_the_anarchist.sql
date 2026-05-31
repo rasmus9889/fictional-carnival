@@ -1,10 +1,9 @@
 CREATE TABLE IF NOT EXISTS "users" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"name" varchar(100),
 	"email" varchar(255) NOT NULL,
 	"password_hash" text NOT NULL,
 	"api_key" varchar(255) NOT NULL,
-	"balance" numeric(10, 6) DEFAULT '5.000000' NOT NULL,
+	"balance" numeric(10, 6) DEFAULT '0.000000' NOT NULL,
 	"role" varchar(20) DEFAULT 'member' NOT NULL,
 	"email_verified" timestamp,
 	"verification_token" varchar(255),
@@ -18,6 +17,12 @@ CREATE TABLE IF NOT EXISTS "users" (
 	CONSTRAINT "users_api_key_unique" UNIQUE("api_key"),
 	CONSTRAINT "users_verification_token_unique" UNIQUE("verification_token"),
 	CONSTRAINT "users_reset_token_unique" UNIQUE("reset_token")
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "user_preferences" (
+	"user_id" integer PRIMARY KEY NOT NULL,
+	"preferences" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "token_usages" (
@@ -45,6 +50,21 @@ CREATE TABLE IF NOT EXISTS "activity_logs" (
 	"timestamp" timestamp DEFAULT now() NOT NULL,
 	"ip_address" varchar(45)
 );
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "debug_logs" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"request_id" varchar(255),
+	"api_key" varchar(255),
+	"model" varchar(255),
+	"prompt" text,
+	"messages" jsonb,
+	"response_text" text,
+	"thinking_text" text,
+	"raw_usage" jsonb,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+ALTER TABLE "user_preferences" ADD CONSTRAINT "user_preferences_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint
 ALTER TABLE "token_usages" ADD CONSTRAINT "token_usages_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint

@@ -147,16 +147,28 @@ volumes:
   }
 }
 
+async function getRedisURL(): Promise<string> {
+  console.log('Step 3: Setting up Redis');
+  return await question('Enter your REDIS_URL (e.g. redis://localhost:6379): ');
+}
+
 async function getStripeSecretKey(): Promise<string> {
-  console.log('Step 3: Getting Stripe Secret Key');
+  console.log('Step 4: Getting Stripe Secret Key');
   console.log(
     'You can find your Stripe Secret Key at: https://dashboard.stripe.com/test/apikeys'
   );
   return await question('Enter your Stripe Secret Key: ');
 }
 
+async function getSendGridConfig(): Promise<{ apiKey: string; fromEmail: string }> {
+  console.log('Step 5: Setting up SendGrid (transactional email)');
+  const apiKey = await question('Enter your SENDGRID_API_KEY (SG.***): ');
+  const fromEmail = await question('Enter your FROM_EMAIL (e.g. noreply@yourdomain.com): ');
+  return { apiKey, fromEmail };
+}
+
 async function createStripeWebhook(): Promise<string> {
-  console.log('Step 4: Creating Stripe webhook...');
+  console.log('Step 6: Creating Stripe webhook...');
   try {
     const { stdout } = await execAsync('stripe listen --print-secret');
     const match = stdout.match(/whsec_[a-zA-Z0-9]+/);
@@ -179,12 +191,12 @@ async function createStripeWebhook(): Promise<string> {
 }
 
 function generateAuthSecret(): string {
-  console.log('Step 5: Generating AUTH_SECRET...');
+  console.log('Step 7: Generating AUTH_SECRET...');
   return crypto.randomBytes(32).toString('hex');
 }
 
 async function writeEnvFile(envVars: Record<string, string>) {
-  console.log('Step 6: Writing environment variables to .env');
+  console.log('Step 8: Writing environment variables to .env');
   const envContent = Object.entries(envVars)
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
@@ -197,20 +209,25 @@ async function main() {
   await checkStripeCLI();
 
   const POSTGRES_URL = await getPostgresURL();
+  const REDIS_URL = await getRedisURL();
   const STRIPE_SECRET_KEY = await getStripeSecretKey();
+  const { apiKey: SENDGRID_API_KEY, fromEmail: FROM_EMAIL } = await getSendGridConfig();
   const STRIPE_WEBHOOK_SECRET = await createStripeWebhook();
   const BASE_URL = 'http://localhost:3000';
   const AUTH_SECRET = generateAuthSecret();
 
   await writeEnvFile({
     POSTGRES_URL,
+    REDIS_URL,
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
+    SENDGRID_API_KEY,
+    FROM_EMAIL,
     BASE_URL,
     AUTH_SECRET,
   });
 
-  console.log('🎉 Setup completed successfully!');
+  console.log('Setup completed successfully!');
 }
 
 main().catch(console.error);

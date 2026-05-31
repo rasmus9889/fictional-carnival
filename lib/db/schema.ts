@@ -58,6 +58,19 @@ export const activityLogs = pgTable('activity_logs', {
   ipAddress: varchar('ip_address', { length: 45 }),
 });
 
+export const debugLogs = pgTable('debug_logs', {
+  id: serial('id').primaryKey(),
+  requestId: varchar('request_id', { length: 255 }),
+  apiKey: varchar('api_key', { length: 255 }),
+  model: varchar('model', { length: 255 }),
+  prompt: text('prompt'),
+  messages: jsonb('messages'),
+  responseText: text('response_text'),
+  thinkingText: text('thinking_text'),
+  rawUsage: jsonb('raw_usage'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   preferences: one(userPreferences, {
     fields: [users.id],
@@ -95,6 +108,8 @@ export type TokenUsage = typeof tokenUsages.$inferSelect;
 export type NewTokenUsage = typeof tokenUsages.$inferInsert;
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type NewActivityLog = typeof activityLogs.$inferInsert;
+export type DebugLog = typeof debugLogs.$inferSelect;
+export type NewDebugLog = typeof debugLogs.$inferInsert;
 
 export enum ActivityType {
   SIGN_UP = 'SIGN_UP',
