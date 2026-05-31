@@ -6,6 +6,6 @@ export async function GET() {
     return Response.json(null);
   }
 
-  const { id, name, email, apiKey, balance, role, emailVerified, createdAt } = user;
-  return Response.json({ id, name, email, apiKey, balance, role, emailVerified, createdAt });
+  const { id, email, apiKey, balance, role, emailVerified, createdAt } = user;
+  return Response.json({ id, email, apiKey, balance, role, emailVerified, createdAt });
 }
