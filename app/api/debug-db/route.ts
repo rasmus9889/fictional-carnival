@@ -11,7 +11,6 @@ export async function GET() {
 
 export async function POST() {
   const patches = [
-    `ALTER TABLE users ADD COLUMN IF NOT EXISTS name varchar(100)`,
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text NOT NULL DEFAULT ''`,
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS role varchar(20) NOT NULL DEFAULT 'member'`,
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified timestamp`,
