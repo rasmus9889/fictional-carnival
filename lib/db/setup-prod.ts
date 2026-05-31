@@ -65,6 +65,18 @@ async function main() {
   `;
   console.log('activity_logs ok');
 
+  // Patch any columns that may be missing from a partial migration
+  await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS name varchar(100)`;
+  await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS api_key varchar(255)`;
+  await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS balance numeric(10,6) NOT NULL DEFAULT '0.000000'`;
+  await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified timestamp`;
+  await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token varchar(255)`;
+  await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expires_at timestamp`;
+  await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token varchar(255)`;
+  await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires_at timestamp`;
+  await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at timestamp`;
+  console.log('column patch ok');
+
   await client.end();
   console.log('\nSchema applied.');
 }
