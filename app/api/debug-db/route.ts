@@ -6,5 +6,5 @@ export async function GET() {
   const cols = await db.execute(
     sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'users' ORDER BY ordinal_position`
   );
-  return NextResponse.json({ columns: cols.rows.map((r: any) => r.column_name) });
+  return NextResponse.json({ columns: (cols as any[]).map((r) => r.column_name) });
 }
