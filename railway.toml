@@ -5,6 +5,6 @@ builder = "RAILPACK"
 NODE_OPTIONS = "--max-old-space-size=2048"
 
 [deploy]
-healthcheckPath = "/"
+healthcheckPath = "/api/health"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
