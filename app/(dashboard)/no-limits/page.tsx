@@ -7,12 +7,12 @@ import { ArrowRight, Zap } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'No More Claude Code Usage Limits',
   description:
-    'Stop hitting Claude\'s daily cap. LoopLoot is a pay-as-you-go proxy — unlimited tokens, EUR wallet, no monthly commitment. One setting change.',
+    'Stop hitting Claude\'s daily cap. LoopLoot is a pay-as-you-go proxy — unlimited tokens, no monthly commitment. One setting change.',
   alternates: { canonical: 'https://looploot.com/no-limits' },
   openGraph: {
     title: 'No More Claude Code Usage Limits – LoopLoot',
     description:
-      'Unlimited tokens. Pay per use. EUR wallet. One setting change.',
+      'Unlimited tokens. Pay per use. No monthly commitment. One setting change.',
     url: 'https://looploot.com/no-limits',
   },
 };
@@ -24,7 +24,7 @@ const schema = {
   applicationCategory: 'DeveloperApplication',
   url: 'https://looploot.com/no-limits',
   description:
-    'Pay-as-you-go Claude Code proxy. No daily or monthly token caps. EUR wallet. One setting change.',
+    'Pay-as-you-go Claude Code proxy. No daily or monthly token caps. No commitment. One setting change.',
   offers: {
     '@type': 'Offer',
     price: '0',
@@ -115,8 +115,8 @@ export default function NoLimitsPage() {
                 body: 'No daily cap. No monthly cap. No throttling after heavy use. Your API key works as long as your wallet has a balance.',
               },
               {
-                title: 'EUR wallet, top up when you want',
-                body: 'Add exactly what you need — €5, €10, €25, or €50. Credits never expire. You\'re not locked into a recurring charge.',
+                title: 'Top up when you want',
+                body: 'Add exactly what you need. Credits never expire. You\'re not locked into a recurring charge.',
               },
               {
                 title: 'One setting change',

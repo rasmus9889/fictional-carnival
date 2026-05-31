@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: '%s – LoopLoot',
   },
   description:
-    'Use Claude Code without usage limits. Pay-as-you-go EUR wallet, built-in web search, and personal memory. One setting change.',
+    'Use Claude Code without usage limits. Pay as you go, built-in web search, and personal memory across every session. One setting change.',
   metadataBase: new URL('https://looploot.com'),
   openGraph: {
     type: 'website',
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     siteName: 'LoopLoot',
     title: 'LoopLoot – Unlimited Claude Code',
     description:
-      'No usage caps. EUR wallet. Web search + memory. One setting change.',
+      'No usage caps. Web search + memory. Pay as you go. One setting change.',
     url: 'https://looploot.com',
     images: [
       {
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'LoopLoot – Unlimited Claude Code',
     description:
-      'No usage caps. EUR wallet. Web search + memory. One setting change.',
+      'No usage caps. Web search + memory. Pay as you go. One setting change.',
     images: ['/og-image.png'],
   },
   robots: {

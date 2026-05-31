@@ -7,12 +7,12 @@ import { ArrowRight, Rocket } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Claude Code for Founders & Entrepreneurs',
   description:
-    'Ship faster with unlimited Claude Code. No usage caps breaking your build-test-iterate loop. EUR wallet, personal memory, and web search for lean teams.',
+    'Ship faster with unlimited Claude Code. No usage caps breaking your build-test-iterate loop. Personal memory, web search, and pay-as-you-go pricing for lean teams.',
   alternates: { canonical: 'https://looploot.com/for-founders' },
   openGraph: {
     title: 'Claude Code for Founders & Entrepreneurs – LoopLoot',
     description:
-      'Unlimited Claude Code for building. No caps. EUR wallet. Memory + web search.',
+      'Unlimited Claude Code for building. No caps. Memory + web search. Pay as you go.',
     url: 'https://looploot.com/for-founders',
   },
 };
@@ -23,7 +23,7 @@ const schema = {
   name: 'LoopLoot for Founders & Entrepreneurs',
   url: 'https://looploot.com/for-founders',
   description:
-    'Unlimited Claude Code for startups and solo founders. Ship faster, iterate more. EUR wallet, personal memory, web search. No usage caps.',
+    'Unlimited Claude Code for startups and solo founders. Ship faster, iterate more. Personal memory, web search, pay as you go. No usage caps.',
   audience: {
     '@type': 'Audience',
     audienceType: 'Entrepreneurs and startup founders',
@@ -124,7 +124,7 @@ export default function ForFoundersPage() {
               },
               {
                 title: 'Pay for what you use',
-                body: 'EUR wallet. Top up when you need it. No monthly subscription that charges you through slow weeks. Your costs scale with your activity, not a plan tier.',
+                body: 'Top up when you need it. No monthly subscription that charges you through slow weeks. Your costs scale with your activity, not a plan tier.',
               },
             ].map((item) => (
               <Card key={item.title} className="bg-card border-border hover:border-orange-500/40 transition-colors">

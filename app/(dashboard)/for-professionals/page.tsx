@@ -7,12 +7,12 @@ import { ArrowRight, Briefcase } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Claude Code for Consultants & Professionals',
   description:
-    'Billable hours without interruptions. Claude Code with personal memory that keeps client context across sessions, and a EUR wallet for clean expense tracking.',
+    'Billable hours without interruptions. Claude Code with personal memory that keeps client context across sessions. Pay only for what you use.',
   alternates: { canonical: 'https://looploot.com/for-professionals' },
   openGraph: {
     title: 'Claude Code for Consultants & Professionals – LoopLoot',
     description:
-      'Uninterrupted Claude Code for billable work. Memory, web search, EUR wallet.',
+      'Uninterrupted Claude Code for billable work. Memory, web search, pay as you go.',
     url: 'https://looploot.com/for-professionals',
   },
 };
@@ -24,7 +24,7 @@ const schema = {
   serviceType: 'AI Assistant Proxy',
   url: 'https://looploot.com/for-professionals',
   description:
-    'Unlimited Claude Code for professionals. Personal memory for client context. EUR wallet for expense tracking. No usage interruptions.',
+    'Unlimited Claude Code for professionals. Personal memory for client context. Pay only for what you use. No usage interruptions.',
   provider: {
     '@type': 'Organization',
     name: 'LoopLoot',
@@ -87,9 +87,9 @@ export default function ForProfessionalsPage() {
                 body: 'You spend the first minutes of every session catching Claude up on the client, the project, and your working style. That\'s billable time wasted.',
               },
               {
-                emoji: '💱',
-                heading: 'USD billing when you work in EUR',
-                body: 'Converting costs to EUR for expense reports and client invoices adds friction every billing cycle.',
+                emoji: '📋',
+                heading: 'Unpredictable monthly costs',
+                body: 'A flat monthly subscription charges you the same whether you use Claude heavily or barely at all. You end up paying for headroom you didn\'t need.',
               },
             ].map((item) => (
               <Card key={item.heading} className="bg-card border-border">
@@ -119,8 +119,8 @@ export default function ForProfessionalsPage() {
                 body: 'Claude remembers each client\'s context, your working conventions, and your preferred output format. Show up ready to work, not ready to brief.',
               },
               {
-                title: 'Clean EUR expenses',
-                body: 'Top up your wallet in EUR. No FX conversion on your receipts. Log it as a business expense without the conversion gymnastics.',
+                title: 'Pay only for what you use',
+                body: 'Top up your wallet and spend it down. No recurring charge, no unused allocation. Your cost this month is exactly what you consumed.',
               },
             ].map((item) => (
               <Card key={item.title} className="bg-card border-border hover:border-orange-500/40 transition-colors">

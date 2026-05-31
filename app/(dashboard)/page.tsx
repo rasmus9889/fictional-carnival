@@ -8,12 +8,12 @@ import { ArrowRight, Zap, Globe, Brain, CreditCard } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'LoopLoot – Unlimited Claude Code',
   description:
-    'Stop hitting Claude Code usage limits. Pay-as-you-go EUR wallet, built-in web search, and personal memory. One setting change to get started.',
+    'Stop hitting Claude Code usage limits. Pay as you go, built-in web search, and personal memory that follows you across every session. One setting change.',
   alternates: { canonical: 'https://looploot.com' },
   openGraph: {
     title: 'LoopLoot – Claude Code, Without the Ceiling',
     description:
-      'No more usage caps. EUR wallet. Web search + memory. One setting change.',
+      'No more usage caps. Web search + memory. Pay as you go. One setting change.',
     url: 'https://looploot.com',
   },
 };
@@ -26,7 +26,7 @@ const schema = {
   operatingSystem: 'Any',
   url: 'https://looploot.com',
   description:
-    'Pay-as-you-go Claude Code proxy with EUR wallet, web search, and personal memory. No usage limits.',
+    'Pay-as-you-go Claude Code proxy with web search and personal memory. No usage limits.',
   offers: {
     '@type': 'Offer',
     price: '0',
@@ -44,9 +44,9 @@ const features = [
   },
   {
     icon: CreditCard,
-    title: 'EUR Wallet',
+    title: 'Pay as You Go',
     description:
-      'Top up like a prepaid card. Credits never expire, and you only pay for what you use. No USD conversion, no surprises.',
+      'Top up like a prepaid card. Credits never expire, and you only pay for what you use — no monthly commitment, no surprise charges.',
   },
   {
     icon: Globe,
@@ -115,7 +115,6 @@ export default function HomePage() {
                   LoopLoot is a separate tool that sits between you and Claude — on
                   Claude Code, on Claude.ai, across every session. No usage limits,
                   real-time web search, and a memory that follows you wherever you work.
-                  Pay as you go in EUR.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button
@@ -160,7 +159,7 @@ export default function HomePage() {
                 {
                   step: '01',
                   title: 'Sign up & top up',
-                  desc: 'Create an account and add EUR to your wallet. Starts from €5 — credits never expire.',
+                  desc: 'Create an account and top up your wallet. Credits never expire.',
                 },
                 {
                   step: '02',
