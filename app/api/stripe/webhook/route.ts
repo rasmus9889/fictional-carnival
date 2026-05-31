@@ -4,9 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
 import { users, activityLogs, ActivityType } from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import { redis, setWalletBalance } from '@/lib/db/redis';
+import { redis } from '@/lib/db/redis';
 import { sendDepositConfirmationEmail } from '@/lib/email/sendgrid';
-import { getEurToUsdRateWithFallback } from '@/lib/fx/rates';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -38,9 +37,9 @@ export async function POST(request: NextRequest) {
     const acquired = await redis.set(
       `payment:processed:${paymentIntentId}`,
       '1',
-      'NX',
       'EX',
-      86400
+      259200, // 72 h — matches Stripe's full retry window
+      'NX'
     );
 
     if (acquired === null) {
@@ -51,8 +50,6 @@ export async function POST(request: NextRequest) {
     if (!userId) return NextResponse.json({ received: true });
 
     const eurAmount = (session.amount_total ?? 0) / 100;
-    const eurToUsd = await getEurToUsdRateWithFallback();
-    const usdAmount = eurAmount * eurToUsd;
 
     const [user] = await db
       .select()
@@ -64,11 +61,11 @@ export async function POST(request: NextRequest) {
 
     const [updated] = await db
       .update(users)
-      .set({ balance: sql`balance + ${usdAmount.toFixed(6)}::numeric` })
+      .set({ balance: sql`balance + ${eurAmount.toFixed(6)}::numeric` })
       .where(eq(users.id, user.id))
       .returning({ balance: users.balance });
 
-    await setWalletBalance(user.apiKey, updated.balance.toString());
+    await redis.incrbyfloat(`wallet:balance:${user.apiKey}`, eurAmount);
 
     await db.insert(activityLogs).values({
       userId: user.id,
@@ -78,7 +75,6 @@ export async function POST(request: NextRequest) {
     await sendDepositConfirmationEmail(
       user.email,
       eurAmount,
-      usdAmount,
       parseFloat(updated.balance)
     );
   }

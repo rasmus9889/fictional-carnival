@@ -6,6 +6,7 @@ import {
   timestamp,
   integer,
   numeric,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -15,7 +16,7 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   apiKey: varchar('api_key', { length: 255 }).notNull().unique(),
-  balance: numeric('balance', { precision: 10, scale: 6 }).notNull().default('5.000000'),
+  balance: numeric('balance', { precision: 10, scale: 6 }).notNull().default('0.000000'),
   role: varchar('role', { length: 20 }).notNull().default('member'),
   emailVerified: timestamp('email_verified'),
   verificationToken: varchar('verification_token', { length: 255 }).unique(),
@@ -25,6 +26,12 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   deletedAt: timestamp('deleted_at'),
+});
+
+export const userPreferences = pgTable('user_preferences', {
+  userId: integer('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  preferences: jsonb('preferences').notNull().default({}),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 export const tokenUsages = pgTable('token_usages', {
@@ -52,9 +59,20 @@ export const activityLogs = pgTable('activity_logs', {
   ipAddress: varchar('ip_address', { length: 45 }),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
+  preferences: one(userPreferences, {
+    fields: [users.id],
+    references: [userPreferences.userId],
+  }),
   tokenUsages: many(tokenUsages),
   activityLogs: many(activityLogs),
+}));
+
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPreferences.userId],
+    references: [users.id],
+  }),
 }));
 
 export const tokenUsagesRelations = relations(tokenUsages, ({ one }) => ({
@@ -73,6 +91,7 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type UserPreferences = typeof userPreferences.$inferSelect;
 export type TokenUsage = typeof tokenUsages.$inferSelect;
 export type NewTokenUsage = typeof tokenUsages.$inferInsert;
 export type ActivityLog = typeof activityLogs.$inferSelect;

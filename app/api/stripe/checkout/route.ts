@@ -4,9 +4,8 @@ import { users, activityLogs, ActivityType } from '@/lib/db/schema';
 import { setSession } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/payments/stripe';
-import { redis, setWalletBalance } from '@/lib/db/redis';
+import { redis } from '@/lib/db/redis';
 import { sendDepositConfirmationEmail } from '@/lib/email/sendgrid';
-import { getEurToUsdRateWithFallback } from '@/lib/fx/rates';
 
 export async function GET(request: NextRequest) {
   const sessionId = request.nextUrl.searchParams.get('session_id');
@@ -33,28 +32,26 @@ export async function GET(request: NextRequest) {
 
     if (!user) throw new Error('User not found.');
 
-    // Idempotency: only process the balance update once per payment_intent
+    // Idempotency: only process once per payment_intent (72h covers Stripe's full retry window)
     const paymentIntentId = session.payment_intent as string;
     const acquired = await redis.set(
       `payment:processed:${paymentIntentId}`,
       '1',
-      'NX',
       'EX',
-      86400
+      259200,
+      'NX'
     );
 
     if (acquired !== null) {
       const eurAmount = (session.amount_total ?? 0) / 100;
-      const eurToUsd = await getEurToUsdRateWithFallback();
-      const usdAmount = eurAmount * eurToUsd;
 
       const [updated] = await db
         .update(users)
-        .set({ balance: sql`balance + ${usdAmount.toFixed(6)}::numeric` })
+        .set({ balance: sql`balance + ${eurAmount.toFixed(6)}::numeric` })
         .where(eq(users.id, user.id))
         .returning({ balance: users.balance });
 
-      await setWalletBalance(user.apiKey, updated.balance.toString());
+      await redis.incrbyfloat(`wallet:balance:${user.apiKey}`, eurAmount);
 
       await db.insert(activityLogs).values({
         userId: user.id,
@@ -65,7 +62,6 @@ export async function GET(request: NextRequest) {
       await sendDepositConfirmationEmail(
         user.email,
         eurAmount,
-        usdAmount,
         parseFloat(updated.balance)
       );
     }

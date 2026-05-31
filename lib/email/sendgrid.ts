@@ -54,8 +54,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 export async function sendDepositConfirmationEmail(
   email: string,
   amountEur: number,
-  amountUsd: number,
-  newBalanceUsd: number
+  newBalanceEur: number
 ) {
   await sgMail.send({
     to: email,
@@ -64,19 +63,15 @@ export async function sendDepositConfirmationEmail(
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Wallet top-up successful</h2>
-        <p>Your wallet has been credited with <strong>$${amountUsd.toFixed(4)}</strong>.</p>
+        <p>Your wallet has been credited with <strong>€${amountEur.toFixed(2)}</strong>.</p>
         <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
           <tr>
-            <td style="padding: 8px; border: 1px solid #e5e7eb; color: #6b7280;">Amount paid</td>
+            <td style="padding: 8px; border: 1px solid #e5e7eb; color: #6b7280;">Amount added</td>
             <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: 600;">€${amountEur.toFixed(2)}</td>
           </tr>
           <tr>
-            <td style="padding: 8px; border: 1px solid #e5e7eb; color: #6b7280;">Wallet credit (USD)</td>
-            <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: 600;">$${amountUsd.toFixed(4)}</td>
-          </tr>
-          <tr>
             <td style="padding: 8px; border: 1px solid #e5e7eb; color: #6b7280;">New balance</td>
-            <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: 600;">$${newBalanceUsd.toFixed(6)}</td>
+            <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: 600;">€${newBalanceEur.toFixed(2)}</td>
           </tr>
         </table>
         <a href="${BASE_URL}/dashboard" style="display: inline-block; background: #f97316; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">

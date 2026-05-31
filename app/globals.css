@@ -273,3 +273,42 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* LoopLoot: dark terminal theme — overrides all previous :root blocks */
+:root {
+  --background: hsl(140 15% 5%);
+  --foreground: hsl(0 0% 90%);
+  --card: hsl(140 12% 8%);
+  --card-foreground: hsl(0 0% 90%);
+  --popover: hsl(140 12% 9%);
+  --popover-foreground: hsl(0 0% 90%);
+  --primary: hsl(25 95% 53%);
+  --primary-foreground: hsl(0 0% 5%);
+  --secondary: hsl(140 10% 14%);
+  --secondary-foreground: hsl(0 0% 90%);
+  --muted: hsl(140 10% 14%);
+  --muted-foreground: hsl(0 0% 50%);
+  --accent: hsl(140 10% 14%);
+  --accent-foreground: hsl(0 0% 90%);
+  --destructive: hsl(0 62.8% 50%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(140 10% 16%);
+  --input: hsl(140 10% 14%);
+  --ring: hsl(25 95% 53%);
+  --sidebar-background: hsl(140 15% 6%);
+  --sidebar-foreground: hsl(0 0% 80%);
+  --sidebar-primary: hsl(25 95% 53%);
+  --sidebar-primary-foreground: hsl(0 0% 5%);
+  --sidebar-accent: hsl(140 10% 12%);
+  --sidebar-accent-foreground: hsl(0 0% 90%);
+  --sidebar-border: hsl(140 10% 14%);
+  --sidebar-ring: hsl(25 95% 53%);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out both;
+}

@@ -1,6 +1,6 @@
 import { desc, and, eq, isNull, sum, count } from 'drizzle-orm';
 import { db } from './drizzle';
-import { activityLogs, tokenUsages, users } from './schema';
+import { activityLogs, tokenUsages, users, userPreferences } from './schema';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/session';
 
@@ -76,4 +76,26 @@ export async function getRecentTokenUsages(userId: number, limit = 20) {
     .where(eq(tokenUsages.userId, userId))
     .orderBy(desc(tokenUsages.createdAt))
     .limit(limit);
+}
+
+export async function getUserPreferences(userId: number): Promise<Record<string, unknown>> {
+  const [row] = await db
+    .select()
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, userId))
+    .limit(1);
+  return (row?.preferences as Record<string, unknown>) ?? {};
+}
+
+export async function upsertUserPreferences(
+  userId: number,
+  preferences: Record<string, unknown>
+): Promise<void> {
+  await db
+    .insert(userPreferences)
+    .values({ userId, preferences, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: userPreferences.userId,
+      set: { preferences, updatedAt: new Date() },
+    });
 }

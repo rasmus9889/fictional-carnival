@@ -47,8 +47,8 @@ function WalletBalanceCard() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-4xl font-bold text-gray-900">
-          €{balanceEur.toFixed(4)}
+        <p className="text-4xl font-bold text-foreground">
+          €{balanceEur.toFixed(2)}
         </p>
         <p className="text-sm text-muted-foreground mt-1">Available balance</p>
         <Button
@@ -223,7 +223,7 @@ function RecentCallsCard() {
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-gray-900">
+                  <span className="text-foreground">
                     €{toEur(call.cost, eurToUsd)}
                   </span>
                   <span className="text-green-600 ml-2">

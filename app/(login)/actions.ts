@@ -21,7 +21,7 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } from '@/lib/email/sendgrid';
-import { transferApiKeyData } from '@/lib/db/redis';
+import { transferApiKeyData, setWalletBalance } from '@/lib/db/redis';
 
 function generateApiKey(): string {
   return 'mcp_' + randomBytes(32).toString('hex');
@@ -120,6 +120,7 @@ export const signUp = validatedAction(signUpSchema, async (data) => {
   }
 
   await Promise.all([
+    setWalletBalance(createdUser.apiKey, '0.000000'),
     logActivity(createdUser.id, ActivityType.SIGN_UP),
     sendVerificationEmail(email, verificationToken),
   ]);
@@ -311,8 +312,12 @@ export const updateAccount = validatedActionWithUser(
   async (data, _, user) => {
     const { name, email } = data;
 
+    if (email !== user.email) {
+      return { name, email, error: 'Email changes are not supported. Contact support to change your email.' };
+    }
+
     await Promise.all([
-      db.update(users).set({ name, email }).where(eq(users.id, user.id)),
+      db.update(users).set({ name }).where(eq(users.id, user.id)),
       logActivity(user.id, ActivityType.UPDATE_ACCOUNT),
     ]);
 
@@ -325,8 +330,13 @@ export const rotateApiKey = validatedActionWithUser(
   async (_, __, user) => {
     const newApiKey = generateApiKey();
 
+    try {
+      await transferApiKeyData(user.apiKey, newApiKey);
+    } catch {
+      return { error: 'Failed to transfer API key data. Please try again.' };
+    }
+
     await db.update(users).set({ apiKey: newApiKey }).where(eq(users.id, user.id));
-    await transferApiKeyData(user.apiKey, newApiKey);
     await logActivity(user.id, ActivityType.ROTATE_API_KEY);
 
     return { success: 'API key rotated successfully.' };
