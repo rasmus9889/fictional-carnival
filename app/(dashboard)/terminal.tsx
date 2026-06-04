@@ -6,19 +6,18 @@ import { Copy, Check } from 'lucide-react';
 const steps = [
   { text: '# 1. Sign up at looploot.com and top up your wallet', type: 'comment' },
   { text: '', type: 'blank' },
-  { text: '# 2. Grab your API key from the dashboard', type: 'comment' },
+  { text: '# 2. One-time install — paste this in your terminal:', type: 'comment' },
+  { text: 'claude mcp add looploot -- npx -y \\', type: 'command' },
+  { text: '  @modelcontextprotocol/sse-to-stdio \\', type: 'command' },
+  { text: '  https://api.looploot.com/mcp \\', type: 'command' },
+  { text: '  --header "Authorization: Bearer mcp_your_key"', type: 'command' },
   { text: '', type: 'blank' },
-  { text: '# 3. One-time Claude Code setup:', type: 'comment' },
-  { text: 'export ANTHROPIC_BASE_URL="https://api.looploot.com"', type: 'command' },
-  { text: 'export ANTHROPIC_API_KEY="mcp_your_key_here"', type: 'command' },
-  { text: '', type: 'blank' },
-  { text: '# Done. Use Claude Code exactly as before:', type: 'comment' },
+  { text: '# 3. Add to your CLAUDE.md and you\'re done:', type: 'comment' },
   { text: '$ claude', type: 'command' },
-  { text: '> Connected via LoopLoot  ·  No limits  ·  Web search active', type: 'output' },
+  { text: '> LoopLoot active  ·  No limits  ·  Web search  ·  Memory', type: 'output' },
 ];
 
-const copySnippet = `export ANTHROPIC_BASE_URL="https://api.looploot.com"
-export ANTHROPIC_API_KEY="mcp_your_key_here"`;
+const copySnippet = `claude mcp add looploot -- npx -y @modelcontextprotocol/sse-to-stdio https://api.looploot.com/mcp --header "Authorization: Bearer mcp_your_key"`;
 
 export function Terminal() {
   const [visibleCount, setVisibleCount] = useState(0);

@@ -163,8 +163,8 @@ export default function HomePage() {
                 },
                 {
                   step: '02',
-                  title: 'Connect LoopLoot',
-                  desc: 'Link LoopLoot to Claude Code and Claude.ai. One key, one endpoint, both interfaces covered.',
+                  title: 'Install the MCP tool',
+                  desc: 'One command installs LoopLoot as an MCP tool in Claude Code. Add a two-line snippet to your CLAUDE.md and it\'s active on every session.',
                 },
                 {
                   step: '03',
