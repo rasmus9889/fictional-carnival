@@ -165,7 +165,7 @@ function SetupCard() {
                     <p className="text-sm font-medium text-foreground">Install the LoopLoot MCP tool</p>
                   </div>
                   <p className="text-xs text-muted-foreground pl-7">
-                    Run this once in any terminal. It registers LoopLoot globally in Claude Code.
+                    Run this once to register LoopLoot globally in Claude Code. You can paste it directly into the Claude Code prompt — just prefix it with <code className="text-orange-400">!</code> to run shell commands inline.
                   </p>
                   {mcpInstallCmd ? (
                     <div className="pl-7">
