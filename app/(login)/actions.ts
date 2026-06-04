@@ -122,7 +122,9 @@ export const signUp = validatedAction(signUpSchema, async (data) => {
   await Promise.all([
     setWalletBalance(createdUser.apiKey, '0.000000'),
     logActivity(createdUser.id, ActivityType.SIGN_UP),
-    sendVerificationEmail(email, verificationToken),
+    sendVerificationEmail(email, verificationToken).catch((err) => {
+      console.error('[sendVerificationEmail] failed:', err?.message ?? err);
+    }),
   ]);
 
   redirect('/check-email');
@@ -191,7 +193,9 @@ export const sendPasswordReset = validatedAction(forgotPasswordSchema, async (da
     .set({ resetToken, resetTokenExpiresAt })
     .where(eq(users.id, user.id));
 
-  await sendPasswordResetEmail(email, resetToken);
+  await sendPasswordResetEmail(email, resetToken).catch((err) => {
+    console.error('[sendPasswordResetEmail] failed:', err?.message ?? err);
+  });
 
   return { success: 'If that email exists, a reset link has been sent.' };
 });
