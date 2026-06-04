@@ -31,5 +31,7 @@ export async function GET() {
     ? parseFloat(redisBalance)
     : parseFloat(user.balance);
 
-  return NextResponse.json({ stats, recentCalls, balanceEur, eurToUsd });
+  const mcpUrl = process.env.MCP_URL?.replace(/\/$/, '') ?? null;
+
+  return NextResponse.json({ stats, recentCalls, balanceEur, eurToUsd, mcpUrl });
 }
