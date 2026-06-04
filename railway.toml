@@ -5,6 +5,7 @@ builder = "RAILPACK"
 NODE_OPTIONS = "--max-old-space-size=2048"
 
 [deploy]
+startCommand = "npm run db:migrate && npm run start"
 healthcheckPath = "/api/health"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
