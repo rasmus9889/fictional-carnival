@@ -4,11 +4,16 @@ import { db } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
 import { setSession } from '@/lib/auth/session';
 
+function appUrl(path: string): string {
+  const base = process.env.BASE_URL ?? 'http://localhost:3000';
+  return `${base.replace(/\/$/, '')}${path}`;
+}
+
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token');
 
   if (!token) {
-    return NextResponse.redirect(new URL('/check-email?error=invalid', request.url));
+    return NextResponse.redirect(appUrl('/check-email?error=invalid'));
   }
 
   try {
@@ -24,7 +29,7 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (!user) {
-      return NextResponse.redirect(new URL('/check-email?error=expired', request.url));
+      return NextResponse.redirect(appUrl('/check-email?error=expired'));
     }
 
     await db
@@ -38,8 +43,8 @@ export async function GET(request: NextRequest) {
       .where(eq(users.id, user.id));
 
     await setSession(user);
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(appUrl('/dashboard'));
   } catch {
-    return NextResponse.redirect(new URL('/check-email?error=invalid', request.url));
+    return NextResponse.redirect(appUrl('/check-email?error=invalid'));
   }
 }

@@ -6,18 +6,23 @@ import { stripe } from '@/lib/payments/stripe';
 import { redis } from '@/lib/db/redis';
 import { sendDepositConfirmationEmail } from '@/lib/email/sendgrid';
 
+function appUrl(path: string): string {
+  const base = process.env.BASE_URL ?? 'http://localhost:3000';
+  return `${base.replace(/\/$/, '')}${path}`;
+}
+
 export async function GET(request: NextRequest) {
   const sessionId = request.nextUrl.searchParams.get('session_id');
 
   if (!sessionId) {
-    return NextResponse.redirect(new URL('/pricing', request.url));
+    return NextResponse.redirect(appUrl('/pricing'));
   }
 
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status !== 'paid') {
-      return NextResponse.redirect(new URL('/pricing', request.url));
+      return NextResponse.redirect(appUrl('/pricing'));
     }
 
     const userId = session.client_reference_id;
@@ -70,9 +75,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(appUrl('/dashboard'));
   } catch (error) {
     console.error('Error handling checkout success:', error);
-    return NextResponse.redirect(new URL('/error', request.url));
+    return NextResponse.redirect(appUrl('/error'));
   }
 }
