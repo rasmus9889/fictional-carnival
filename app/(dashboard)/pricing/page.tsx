@@ -1,6 +1,8 @@
 import { topUpAction } from '@/lib/payments/actions';
+import { getUser } from '@/lib/db/queries';
 import { Check } from 'lucide-react';
 import { SubmitButton } from './submit-button';
+import Link from 'next/link';
 
 const TOP_UP_AMOUNTS = [
   { label: '€5', cents: 500, description: 'Starter', perks: ['€5 wallet credit', 'No expiry'] },
@@ -9,14 +11,28 @@ const TOP_UP_AMOUNTS = [
   { label: '€50', cents: 5000, description: 'Pro', perks: ['€50 wallet credit', 'No expiry'] },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const user = await getUser().catch(() => null);
+
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900">Add Funds</h1>
-        <p className="mt-3 text-lg text-gray-500">
-          Top up your wallet to continue using the MCP Bypass API
+        <h1 className="text-4xl font-bold text-foreground">Add Funds</h1>
+        <p className="mt-3 text-lg text-muted-foreground">
+          Top up your wallet to continue using LoopLoot
         </p>
+        {!user && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            <Link href="/sign-in" className="text-orange-500 hover:text-orange-400 font-medium">
+              Sign in
+            </Link>
+            {' '}or{' '}
+            <Link href="/sign-up" className="text-orange-500 hover:text-orange-400 font-medium">
+              create an account
+            </Link>
+            {' '}first — you'll be redirected back here after.
+          </p>
+        )}
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
         {TOP_UP_AMOUNTS.map((amount) => (

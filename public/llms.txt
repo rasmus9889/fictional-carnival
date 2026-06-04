@@ -1,0 +1,30 @@
+# LoopLoot
+
+> Pay-as-you-go Claude proxy with built-in web search and cross-session personal memory. No usage limits.
+
+LoopLoot sits between users and Claude (Anthropic's AI model). It routes requests through its own inference layer, removing usage caps, adding real-time web search to every request, and maintaining a persistent personal memory store that follows the user across sessions and interfaces (Claude Code CLI and Claude.ai).
+
+## What it does
+
+- **No usage limits** — users pay per token rather than per month; no daily or monthly cap
+- **Built-in web search** — every Claude request can search the web mid-conversation without plugins
+- **Cross-session memory** — user background, projects, and preferences are stored and injected into every request automatically
+- **Works everywhere** — one API key and one endpoint covers both Claude Code (CLI) and Claude.ai (desktop/web)
+
+## Pricing
+
+Free to sign up. Users top up a EUR-denominated wallet via Stripe. Credits never expire. No subscription or monthly commitment.
+
+## How to connect
+
+Point `ANTHROPIC_BASE_URL` at `https://api.looploot.com` and use a LoopLoot API key as `ANTHROPIC_API_KEY`. Everything else works exactly as before.
+
+## Audience
+
+Developers, founders, researchers, consultants, and anyone who uses Claude heavily and wants uninterrupted access with better context continuity.
+
+## Links
+
+- Homepage: https://looploot.com
+- Sign up: https://looploot.com/sign-up
+- Pricing: https://looploot.com/pricing

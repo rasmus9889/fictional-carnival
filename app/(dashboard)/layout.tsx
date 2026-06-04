@@ -38,6 +38,12 @@ function UserMenu() {
         >
           Pricing
         </Link>
+        <Link
+          href="/sign-in"
+          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Sign In
+        </Link>
         <Button
           asChild
           className="rounded-full bg-orange-500 hover:bg-orange-600 text-black font-semibold"

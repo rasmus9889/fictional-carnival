@@ -54,15 +54,17 @@ export const viewport: Viewport = { maximumScale: 1 };
 
 const manrope = Manrope({ subsets: ['latin'] });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getUser().catch(() => null);
+
   return (
     <html lang="en" className={manrope.className}>
       <body className="min-h-[100dvh] bg-background text-foreground">
-        <SWRConfig value={{ fallback: { '/api/user': getUser() } }}>
+        <SWRConfig value={{ fallback: { '/api/user': user } }}>
           {children}
         </SWRConfig>
       </body>
