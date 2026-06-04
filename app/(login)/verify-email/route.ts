@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { and, eq, gt } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
-import { setSession } from '@/lib/auth/session';
 
 function appUrl(path: string): string {
   const base = process.env.BASE_URL ?? 'http://localhost:3000';
@@ -42,8 +41,9 @@ export async function GET(request: NextRequest) {
       })
       .where(eq(users.id, user.id));
 
-    await setSession(user);
-    return NextResponse.redirect(appUrl('/dashboard'));
+    // Auth.js cannot issue a session from a GET route handler without credentials,
+    // so redirect to sign-in with a verified flag to show a success message.
+    return NextResponse.redirect(appUrl('/sign-in?verified=true'));
   } catch {
     return NextResponse.redirect(appUrl('/check-email?error=invalid'));
   }

@@ -1,17 +1,15 @@
+import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { signToken, verifyToken } from '@/lib/auth/session';
-
-const protectedRoutes = '/dashboard';
 
 function requireBasicAuth(request: NextRequest): NextResponse | null {
   const stagingPass = process.env.STAGING_PASS;
-  if (!stagingPass) return null; // no password configured — allow through
+  if (!stagingPass) return null;
 
   const stagingUser = process.env.STAGING_USER ?? 'admin';
-  const auth = request.headers.get('authorization') ?? '';
-  if (auth.startsWith('Basic ')) {
-    const decoded = Buffer.from(auth.slice(6), 'base64').toString('utf-8');
+  const authHeader = request.headers.get('authorization') ?? '';
+  if (authHeader.startsWith('Basic ')) {
+    const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
     const [user, pass] = decoded.split(':');
     if (user === stagingUser && pass === stagingPass) return null;
   }
@@ -21,51 +19,20 @@ function requireBasicAuth(request: NextRequest): NextResponse | null {
   });
 }
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
+export default auth((req) => {
   if (process.env.TEST_MODE === 'true') {
-    const deny = requireBasicAuth(request);
+    const deny = requireBasicAuth(req);
     if (deny) return deny;
   }
-  const sessionCookie = request.cookies.get('session');
-  const isProtectedRoute = pathname.startsWith(protectedRoutes);
 
-  if (isProtectedRoute && !sessionCookie) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
+  if (req.nextUrl.pathname.startsWith('/dashboard') && !req.auth) {
+    return NextResponse.redirect(new URL('/sign-in', req.url));
   }
 
-  let res = NextResponse.next();
-
-  if (sessionCookie && request.method === 'GET') {
-    try {
-      const parsed = await verifyToken(sessionCookie.value);
-      const expiresInOneDay = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-      res.cookies.set({
-        name: 'session',
-        value: await signToken({
-          ...parsed,
-          expires: expiresInOneDay.toISOString()
-        }),
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        expires: expiresInOneDay
-      });
-    } catch (error) {
-      console.error('Error updating session:', error);
-      res.cookies.delete('session');
-      if (isProtectedRoute) {
-        return NextResponse.redirect(new URL('/sign-in', request.url));
-      }
-    }
-  }
-
-  return res;
-}
+  return NextResponse.next();
+});
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
-  runtime: 'nodejs'
+  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico).*)'],
+  runtime: 'nodejs',
 };

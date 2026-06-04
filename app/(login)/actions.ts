@@ -4,16 +4,17 @@ import { z } from 'zod';
 import { and, eq, gt, isNull, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import {
-  User,
   users,
   activityLogs,
   type NewUser,
   type NewActivityLog,
   ActivityType,
 } from '@/lib/db/schema';
-import { comparePasswords, hashPassword, setSession } from '@/lib/auth/session';
+import { comparePasswords, hashPassword } from '@/lib/auth/session';
+import { signIn as authSignIn, signOut as authSignOut } from '@/auth';
+import { AuthError } from 'next-auth';
+import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { getUser } from '@/lib/db/queries';
 import { validatedAction, validatedActionWithUser } from '@/lib/auth/middleware';
 import { randomBytes } from 'crypto';
@@ -52,42 +53,41 @@ const signInSchema = z.object({
 export const signIn = validatedAction(signInSchema, async (data) => {
   const { email, password } = data;
 
-  const foundUsers = await db
+  // Check email verified before handing off to Auth.js so we can return a
+  // specific error message rather than a generic "invalid credentials" one.
+  const [foundUser] = await db
     .select()
     .from(users)
     .where(and(eq(users.email, email), isNull(users.deletedAt)))
     .limit(1);
 
-  if (foundUsers.length === 0) {
-    return { error: 'Invalid email or password. Please try again.', email, password };
+  if (foundUser && !foundUser.emailVerified) {
+    return { error: 'Please verify your email before signing in. Check your inbox.', email };
   }
 
-  const foundUser = foundUsers[0];
-  const isPasswordValid = await comparePasswords(password, foundUser.passwordHash);
-
-  if (!isPasswordValid) {
-    return { error: 'Invalid email or password. Please try again.', email, password };
+  try {
+    await authSignIn('credentials', { email, password, redirectTo: '/dashboard' });
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    if (error instanceof AuthError) {
+      return { error: 'Invalid email or password. Please try again.', email };
+    }
+    throw error;
   }
-
-  if (!foundUser.emailVerified) {
-    return { error: 'Please verify your email before signing in. Check your inbox.', email, password };
-  }
-
-  await Promise.all([
-    setSession(foundUser),
-    logActivity(foundUser.id, ActivityType.SIGN_IN),
-  ]);
-
-  redirect('/dashboard');
 });
 
 const signUpSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  confirmPassword: z.string().min(8),
 });
 
 export const signUp = validatedAction(signUpSchema, async (data) => {
-  const { email, password } = data;
+  const { email, password, confirmPassword } = data;
+
+  if (password !== confirmPassword) {
+    return { error: 'Passwords do not match.', email };
+  }
 
   const existingUser = await db
     .select()
@@ -136,13 +136,13 @@ export const signUp = validatedAction(signUpSchema, async (data) => {
 
 
 export async function signOut() {
-  const user = (await getUser()) as User;
+  const user = await getUser();
   try {
     if (user) await logActivity(user.id, ActivityType.SIGN_OUT);
   } catch (err) {
     console.error('[signOut] logActivity failed:', (err as Error)?.message ?? err);
   }
-  (await cookies()).delete('session');
+  await authSignOut({ redirectTo: '/sign-in' });
 }
 
 const forgotPasswordSchema = z.object({
@@ -232,6 +232,9 @@ export const updatePassword = validatedActionWithUser(
   async (data, _, user) => {
     const { currentPassword, newPassword, confirmPassword } = data;
 
+    if (!user.passwordHash) {
+      return { currentPassword, newPassword, confirmPassword, error: 'Your account uses social sign-in. Password cannot be changed here.' };
+    }
     const isPasswordValid = await comparePasswords(currentPassword, user.passwordHash);
     if (!isPasswordValid) {
       return { currentPassword, newPassword, confirmPassword, error: 'Current password is incorrect.' };
@@ -265,8 +268,7 @@ export const deleteAccount = validatedActionWithUser(
   async (data, _, user) => {
     const { password } = data;
 
-    const isPasswordValid = await comparePasswords(password, user.passwordHash);
-    if (!isPasswordValid) {
+    if (user.passwordHash && !(await comparePasswords(password, user.passwordHash))) {
       return { password, error: 'Incorrect password. Account deletion failed.' };
     }
 
@@ -285,8 +287,7 @@ export const deleteAccount = validatedActionWithUser(
       console.error('[deleteAccount] Redis cleanup failed:', (err as Error)?.message ?? err);
     });
 
-    (await cookies()).delete('session');
-    redirect('/sign-in');
+    await authSignOut({ redirectTo: '/sign-in' });
   }
 );
 
