@@ -89,7 +89,7 @@ function SetupCard() {
   const hasBalance = balanceEur > 0;
 
   const mcpInstallCmd = mcpUrl && apiKey !== '…'
-    ? `claude mcp add looploot -- npx -y @modelcontextprotocol/sse-to-stdio ${mcpUrl}/mcp --header "Authorization: Bearer ${apiKey}"`
+    ? `! claude mcp add looploot -- npx -y @modelcontextprotocol/sse-to-stdio ${mcpUrl}/mcp --header "Authorization: Bearer ${apiKey}"`
     : null;
 
   const proxyOneliner = `export ANTHROPIC_BASE_URL="https://api.looploot.com" && export ANTHROPIC_API_KEY="${apiKey}"`;
@@ -165,7 +165,7 @@ function SetupCard() {
                     <p className="text-sm font-medium text-foreground">Install the LoopLoot MCP tool</p>
                   </div>
                   <p className="text-xs text-muted-foreground pl-7">
-                    Run this once to register LoopLoot globally in Claude Code. You can paste it directly into the Claude Code prompt — just prefix it with <code className="text-orange-400">!</code> to run shell commands inline.
+                    Paste this directly into the Claude Code prompt to install LoopLoot globally. The <code className="text-orange-400">!</code> prefix runs it as a shell command.
                   </p>
                   {mcpInstallCmd ? (
                     <div className="pl-7">
