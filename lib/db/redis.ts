@@ -66,6 +66,41 @@ export async function deleteWalletData(apiKey: string): Promise<void> {
   );
 }
 
+const SYNC_INTERVAL_SEC = 300; // re-check at most once every 5 minutes per user
+
+export async function reconcileBalance(
+  apiKey: string,
+  postgresBalanceEur: number,
+  totalCostUsd: number,
+  eurToUsd: number,
+): Promise<string | null> {
+  const syncKey = `wallet:sync_check:${apiKey}`;
+  const alreadySynced = await redis.get(syncKey);
+
+  // Always refresh the rate-limit window so the next check is 5 min from now
+  await redis.set(syncKey, '1', 'EX', SYNC_INTERVAL_SEC);
+
+  if (alreadySynced) return null; // not due yet
+
+  const expectedEur = postgresBalanceEur - totalCostUsd / eurToUsd;
+  const safeBalance = Math.max(0, expectedEur);
+
+  const current = await redis.get(`wallet:balance:${apiKey}`);
+  const currentEur = parseFloat(current ?? '0');
+
+  if (Math.abs(safeBalance - currentEur) > 0.01) {
+    const newBalance = safeBalance.toFixed(6);
+    await redis.set(`wallet:balance:${apiKey}`, newBalance);
+    console.log(
+      `[reconcileBalance] ${apiKey}: Redis ${currentEur.toFixed(6)} → ${newBalance}` +
+      ` (Postgres €${postgresBalanceEur.toFixed(6)}, spent $${totalCostUsd.toFixed(6)})`
+    );
+    return newBalance;
+  }
+
+  return null;
+}
+
 export async function transferApiKeyData(oldApiKey: string, newApiKey: string): Promise<void> {
   const script = `
     local balance = redis.call('GET', KEYS[1])

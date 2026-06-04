@@ -156,77 +156,76 @@ function SetupCard() {
             </div>
 
             {tab === 'claude-code' && (
-              <div className="space-y-4">
-                {/* ── Primary: MCP install ── */}
-                <p className="text-sm text-muted-foreground">
-                  Run this once in your terminal to install LoopLoot as an MCP tool in Claude Code:
-                </p>
+              <div className="space-y-6">
 
-                {mcpInstallCmd ? (
-                  <CopyBlock text={mcpInstallCmd} label="MCP install command" />
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">
-                    MCP server URL not configured — contact support.
+                {/* ── Step 1: install MCP tool ── */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center">1</span>
+                    <p className="text-sm font-medium text-foreground">Install the LoopLoot MCP tool</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-7">
+                    Run this once in any terminal. It registers LoopLoot globally in Claude Code.
                   </p>
-                )}
-
-                {/* ── CLAUDE.md toggle ── */}
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setShowClaudeMd((v) => !v)}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showClaudeMd ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                    Boost reasoning quality (add to CLAUDE.md)
-                  </button>
-                  <span className="relative group/tip">
-                    <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md opacity-0 transition-opacity group-hover/tip:opacity-100">
-                      A plain text file that gives Claude instructions for your project. Create a file named <strong>CLAUDE.md</strong> in your project&apos;s root folder and Claude Code will read it automatically every session.
-                    </span>
-                  </span>
+                  {mcpInstallCmd ? (
+                    <div className="pl-7">
+                      <CopyBlock text={mcpInstallCmd} label="MCP install command" />
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic pl-7">
+                      MCP server URL not configured — contact support.
+                    </p>
+                  )}
                 </div>
 
-                {showClaudeMd && (
-                  <div className="space-y-2 animate-fade-in">
-                    <p className="text-xs text-muted-foreground">
-                      Add this to your project&apos;s <code className="text-orange-400">CLAUDE.md</code> so Claude Code
-                      always uses LoopLoot&apos;s <code className="text-orange-400">extra_think</code> tool for reasoning.
-                      It&apos;s <strong className="text-foreground">cheaper than native Claude tokens</strong>, has a{' '}
-                      <strong className="text-foreground">1 M-token context window</strong>, and automatically carries
-                      your <strong className="text-foreground">personal preferences &amp; persistent context</strong> across sessions.
-                    </p>
+                {/* ── Step 2: add to CLAUDE.md ── */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center">2</span>
+                    <p className="text-sm font-medium text-foreground">Add to your CLAUDE.md</p>
+                    <span className="relative group/tip">
+                      <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md opacity-0 transition-opacity group-hover/tip:opacity-100">
+                        CLAUDE.md is read by Claude Code at the start of every session. Place it in your project root (or <code>~/.claude/CLAUDE.md</code> for global effect).
+                      </span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-7">
+                    This tells Claude to use LoopLoot&apos;s <code className="text-orange-400">extra_think</code> tool for reasoning — cheaper than native tokens, 1 M-token context, and carries your personal context across sessions.
+                  </p>
+                  <div className="pl-7">
                     <CopyBlock text={claudeMdSnippet} label="CLAUDE.md snippet" />
-                    <p className="text-xs text-muted-foreground">
-                      Append to an existing <code className="text-orange-400">CLAUDE.md</code>, or create one in your project root.
-                    </p>
                   </div>
-                )}
+                  <p className="text-xs text-muted-foreground pl-7">
+                    Append to an existing <code className="text-orange-400">CLAUDE.md</code>, or create the file at your project root.
+                    For it to apply to all projects, use <code className="text-orange-400">~/.claude/CLAUDE.md</code>.
+                  </p>
+                </div>
 
-                {/* ── Secondary: API proxy env vars ── */}
-                <button
-                  onClick={() => setShowProxy((v) => !v)}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showProxy ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                  Route all Claude API calls through LoopLoot (optional)
-                </button>
+                {/* ── Optional: API proxy ── */}
+                <div className="border-t border-border pt-4">
+                  <button
+                    onClick={() => setShowProxy((v) => !v)}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showProxy ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    Legacy: route ALL Claude API calls through LoopLoot
+                  </button>
 
-                {showProxy && (
-                  <div className="space-y-3 animate-fade-in">
-                    <p className="text-xs text-muted-foreground">
-                      To route <em>every</em> Claude API call through LoopLoot (not just MCP tool calls),
-                      paste this in your terminal:
-                    </p>
-                    <CopyBlock text={proxyOneliner} label="proxy one-liner" />
-                    <p className="text-xs text-muted-foreground">
-                      To make it permanent, add these two lines to your{' '}
-                      <code className="text-orange-400">~/.zshrc</code> or{' '}
-                      <code className="text-orange-400">~/.bashrc</code>:
-                    </p>
-                    <CopyBlock text={proxyPermanent} label="shell config" />
-                  </div>
-                )}
+                  {showProxy && (
+                    <div className="space-y-3 mt-3 animate-fade-in">
+                      <p className="text-xs text-muted-foreground">
+                        Not recommended — the MCP tool above is the preferred integration. This alternative redirects <em>all</em> Claude API calls (not just tool calls) through LoopLoot&apos;s proxy layer by overriding the Anthropic base URL:
+                      </p>
+                      <CopyBlock text={proxyOneliner} label="proxy one-liner" />
+                      <p className="text-xs text-muted-foreground">
+                        To make permanent, add to your <code className="text-orange-400">~/.zshrc</code> or <code className="text-orange-400">~/.bashrc</code>:
+                      </p>
+                      <CopyBlock text={proxyPermanent} label="shell config" />
+                    </div>
+                  )}
+                </div>
+
               </div>
             )}
 
