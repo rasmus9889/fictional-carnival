@@ -21,7 +21,7 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } from '@/lib/email/sendgrid';
-import { transferApiKeyData, setWalletBalance } from '@/lib/db/redis';
+import { transferApiKeyData, setWalletBalance, deleteWalletData } from '@/lib/db/redis';
 
 function generateApiKey(): string {
   return 'mcp_' + randomBytes(32).toString('hex');
@@ -120,10 +120,14 @@ export const signUp = validatedAction(signUpSchema, async (data) => {
   }
 
   await Promise.all([
-    setWalletBalance(createdUser.apiKey, '0.000000'),
-    logActivity(createdUser.id, ActivityType.SIGN_UP),
+    setWalletBalance(createdUser.apiKey, '0.000000').catch((err) => {
+      console.error('[signUp] setWalletBalance failed:', err?.message ?? err);
+    }),
+    logActivity(createdUser.id, ActivityType.SIGN_UP).catch((err) => {
+      console.error('[signUp] logActivity failed:', err?.message ?? err);
+    }),
     sendVerificationEmail(email, verificationToken).catch((err) => {
-      console.error('[sendVerificationEmail] failed:', err?.message ?? err);
+      console.error('[signUp] sendVerificationEmail failed:', err?.message ?? err);
     }),
   ]);
 
@@ -154,6 +158,7 @@ export async function verifyEmail(token: string): Promise<{ error?: string; succ
       emailVerified: new Date(),
       verificationToken: null,
       verificationTokenExpiresAt: null,
+      updatedAt: new Date(),
     })
     .where(eq(users.id, user.id));
 
@@ -163,7 +168,11 @@ export async function verifyEmail(token: string): Promise<{ error?: string; succ
 
 export async function signOut() {
   const user = (await getUser()) as User;
-  if (user) await logActivity(user.id, ActivityType.SIGN_OUT);
+  try {
+    if (user) await logActivity(user.id, ActivityType.SIGN_OUT);
+  } catch (err) {
+    console.error('[signOut] logActivity failed:', (err as Error)?.message ?? err);
+  }
   (await cookies()).delete('session');
 }
 
@@ -236,6 +245,7 @@ export const resetPassword = validatedAction(resetPasswordSchema, async (data) =
       passwordHash,
       resetToken: null,
       resetTokenExpiresAt: null,
+      updatedAt: new Date(),
     })
     .where(eq(users.id, user.id));
 
@@ -298,8 +308,13 @@ export const deleteAccount = validatedActionWithUser(
       .set({
         deletedAt: sql`CURRENT_TIMESTAMP`,
         email: sql`CONCAT(email, '-', id, '-deleted')`,
+        updatedAt: new Date(),
       })
       .where(eq(users.id, user.id));
+
+    await deleteWalletData(user.apiKey).catch((err) => {
+      console.error('[deleteAccount] Redis cleanup failed:', (err as Error)?.message ?? err);
+    });
 
     (await cookies()).delete('session');
     redirect('/sign-in');
@@ -325,18 +340,53 @@ export const updateAccount = validatedActionWithUser(
   }
 );
 
+const resendVerificationSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resendVerificationEmail = validatedAction(resendVerificationSchema, async (data) => {
+  const { email } = data;
+
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.email, email), isNull(users.emailVerified), isNull(users.deletedAt)))
+    .limit(1);
+
+  // Always return success to prevent email enumeration
+  if (!user) {
+    return { success: 'If that email is registered and unverified, a new link has been sent.' };
+  }
+
+  const verificationToken = generateToken();
+  const verificationTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  await db
+    .update(users)
+    .set({ verificationToken, verificationTokenExpiresAt, updatedAt: new Date() })
+    .where(eq(users.id, user.id));
+
+  await sendVerificationEmail(email, verificationToken).catch((err) => {
+    console.error('[resendVerificationEmail] failed:', err?.message ?? err);
+  });
+
+  return { success: 'If that email is registered and unverified, a new link has been sent.' };
+});
+
 export const rotateApiKey = validatedActionWithUser(
   z.object({}),
   async (_, __, user) => {
     const newApiKey = generateApiKey();
 
-    try {
-      await transferApiKeyData(user.apiKey, newApiKey);
-    } catch {
-      return { error: 'Failed to transfer API key data. Please try again.' };
-    }
+    // Update Postgres first — if this fails, Redis is untouched and we can safely return an error.
+    await db.update(users).set({ apiKey: newApiKey, updatedAt: new Date() }).where(eq(users.id, user.id));
 
-    await db.update(users).set({ apiKey: newApiKey }).where(eq(users.id, user.id));
+    // Transfer Redis data second. If this fails, Postgres has the new key but Redis still has
+    // balance under the old key. Log the error; the user's next rotation attempt will fix it.
+    await transferApiKeyData(user.apiKey, newApiKey).catch((err) => {
+      console.error('[rotateApiKey] Redis transfer failed:', (err as Error)?.message ?? err);
+    });
+
     await logActivity(user.id, ActivityType.ROTATE_API_KEY);
 
     return { success: 'API key rotated successfully.' };

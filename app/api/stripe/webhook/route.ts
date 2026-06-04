@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     const [updated] = await db
       .update(users)
-      .set({ balance: sql`balance + ${eurAmount.toFixed(6)}::numeric` })
+      .set({ balance: sql`balance + ${eurAmount.toFixed(6)}::numeric`, updatedAt: new Date() })
       .where(eq(users.id, user.id))
       .returning({ balance: users.balance });
 
@@ -76,7 +76,9 @@ export async function POST(request: NextRequest) {
       user.email,
       eurAmount,
       parseFloat(updated.balance)
-    );
+    ).catch((err) => {
+      console.error('[webhook] sendDepositConfirmationEmail failed:', err?.message ?? err);
+    });
   }
 
   return NextResponse.json({ received: true });

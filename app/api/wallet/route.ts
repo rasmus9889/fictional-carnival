@@ -22,8 +22,8 @@ export async function GET() {
       getEurToUsdRateWithFallback(),
       getWalletBalance(user.apiKey),
     ]);
-  } catch {
-    // Redis or FX rate unavailable — fall back to Postgres balance
+  } catch (err) {
+    console.error('[/api/wallet] Redis or FX rate unavailable, falling back to Postgres balance:', (err as Error)?.message ?? err);
   }
 
   // Balance is stored in EUR directly; Redis is authoritative, Postgres is fallback

@@ -1,7 +1,6 @@
 import { eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import { users, activityLogs, ActivityType } from '@/lib/db/schema';
-import { setSession } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/payments/stripe';
 import { redis } from '@/lib/db/redis';
@@ -47,26 +46,30 @@ export async function GET(request: NextRequest) {
 
       const [updated] = await db
         .update(users)
-        .set({ balance: sql`balance + ${eurAmount.toFixed(6)}::numeric` })
+        .set({ balance: sql`balance + ${eurAmount.toFixed(6)}::numeric`, updatedAt: new Date() })
         .where(eq(users.id, user.id))
         .returning({ balance: users.balance });
 
       await redis.incrbyfloat(`wallet:balance:${user.apiKey}`, eurAmount);
 
+      const rawIp = request.headers.get('x-forwarded-for') ?? '';
+      const ipAddress = rawIp.split(',')[0].trim().slice(0, 45);
+
       await db.insert(activityLogs).values({
         userId: user.id,
         action: ActivityType.ADD_FUNDS,
-        ipAddress: request.headers.get('x-forwarded-for') ?? '',
+        ipAddress,
       });
 
       await sendDepositConfirmationEmail(
         user.email,
         eurAmount,
         parseFloat(updated.balance)
-      );
+      ).catch((err) => {
+        console.error('[checkout] sendDepositConfirmationEmail failed:', err?.message ?? err);
+      });
     }
 
-    await setSession(user);
     return NextResponse.redirect(new URL('/dashboard', request.url));
   } catch (error) {
     console.error('Error handling checkout success:', error);

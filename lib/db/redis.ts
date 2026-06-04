@@ -58,6 +58,14 @@ export async function getRecentCalls(apiKey: string, count = 20): Promise<CallLo
   }).filter(Boolean) as CallLog[];
 }
 
+export async function deleteWalletData(apiKey: string): Promise<void> {
+  await redis.del(
+    `wallet:balance:${apiKey}`,
+    `wallet:stats:${apiKey}`,
+    `wallet:calls:${apiKey}`,
+  );
+}
+
 export async function transferApiKeyData(oldApiKey: string, newApiKey: string): Promise<void> {
   const script = `
     local balance = redis.call('GET', KEYS[1])

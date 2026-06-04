@@ -4,19 +4,20 @@ import { signToken, verifyToken } from '@/lib/auth/session';
 
 const protectedRoutes = '/dashboard';
 
-const STAGING_USER = 'admin';
-const STAGING_PASS = 'tinyblueturtle';
-
 function requireBasicAuth(request: NextRequest): NextResponse | null {
+  const stagingPass = process.env.STAGING_PASS;
+  if (!stagingPass) return null; // no password configured — allow through
+
+  const stagingUser = process.env.STAGING_USER ?? 'admin';
   const auth = request.headers.get('authorization') ?? '';
   if (auth.startsWith('Basic ')) {
     const decoded = Buffer.from(auth.slice(6), 'base64').toString('utf-8');
     const [user, pass] = decoded.split(':');
-    if (user === STAGING_USER && pass === STAGING_PASS) return null;
+    if (user === stagingUser && pass === stagingPass) return null;
   }
   return new NextResponse('Unauthorized', {
     status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="LoopLoot Staging"' },
+    headers: { 'WWW-Authenticate': 'Basic realm="Staging"' },
   });
 }
 

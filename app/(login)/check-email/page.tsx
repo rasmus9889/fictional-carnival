@@ -1,5 +1,6 @@
 import { CircleIcon } from 'lucide-react';
 import Link from 'next/link';
+import { ResendForm } from './resend-form';
 
 export default function CheckEmailPage() {
   return (
@@ -22,6 +23,7 @@ export default function CheckEmailPage() {
             Sign in
           </Link>
         </p>
+        <ResendForm />
       </div>
     </div>
   );

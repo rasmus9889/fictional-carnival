@@ -35,7 +35,11 @@ type WalletData = {
   eurToUsd: number;
 };
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = (url: string) =>
+  fetch(url).then((r) => {
+    if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    return r.json();
+  });
 
 function toEur(usd: number, eurToUsd: number) {
   return (usd / eurToUsd).toFixed(4);

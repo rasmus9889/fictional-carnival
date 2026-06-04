@@ -5,8 +5,17 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 const FROM_EMAIL = process.env.FROM_EMAIL!;
 const BASE_URL = process.env.BASE_URL!;
 
+function isEmailDisabled(): boolean {
+  return process.env.TEST_MODE === 'true' && !process.env.SENDGRID_API_KEY;
+}
+
 export async function sendVerificationEmail(email: string, token: string) {
   const verifyUrl = `${BASE_URL}/verify-email?token=${token}`;
+
+  if (isEmailDisabled()) {
+    console.log(`[TEST_MODE] Verification link for ${email}: ${verifyUrl}`);
+    return;
+  }
 
   await sgMail.send({
     to: email,
@@ -30,6 +39,11 @@ export async function sendVerificationEmail(email: string, token: string) {
 
 export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${BASE_URL}/reset-password?token=${token}`;
+
+  if (isEmailDisabled()) {
+    console.log(`[TEST_MODE] Password reset link for ${email}: ${resetUrl}`);
+    return;
+  }
 
   await sgMail.send({
     to: email,
