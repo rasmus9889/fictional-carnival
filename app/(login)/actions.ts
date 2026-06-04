@@ -134,37 +134,6 @@ export const signUp = validatedAction(signUpSchema, async (data) => {
   redirect('/check-email');
 });
 
-export async function verifyEmail(token: string): Promise<{ error?: string; success?: boolean }> {
-  if (!token) return { error: 'Invalid verification link.' };
-
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(
-      and(
-        eq(users.verificationToken, token),
-        gt(users.verificationTokenExpiresAt, new Date())
-      )
-    )
-    .limit(1);
-
-  if (!user) {
-    return { error: 'Verification link is invalid or has expired.' };
-  }
-
-  await db
-    .update(users)
-    .set({
-      emailVerified: new Date(),
-      verificationToken: null,
-      verificationTokenExpiresAt: null,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, user.id));
-
-  await setSession(user);
-  return { success: true };
-}
 
 export async function signOut() {
   const user = (await getUser()) as User;
