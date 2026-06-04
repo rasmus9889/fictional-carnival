@@ -217,7 +217,7 @@ async function main() {
   const AUTH_SECRET = generateAuthSecret();
 
   await writeEnvFile({
-    POSTGRES_URL,
+    DATABASE_URL: POSTGRES_URL,
     REDIS_URL,
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
